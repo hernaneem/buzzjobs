@@ -1,15 +1,14 @@
 "use client"
 
-import { useContext } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card-custom"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button-custom"
-import { BehaviorTrackingContext } from "@/contexts/behavior-tracking-context"
-import { AlertCircle, Info } from "lucide-react"
+import { Info } from "lucide-react"
 
 export function TrackingPreferences() {
-  const { isEnabled, enableTracking, disableTracking, clearSessionEvents } = useContext(BehaviorTrackingContext)
+  const [isEnabled, setIsEnabled] = useState(false)
 
   return (
     <Card>
@@ -32,13 +31,7 @@ export function TrackingPreferences() {
           <Switch
             id="tracking-toggle"
             checked={isEnabled}
-            onCheckedChange={(checked) => {
-              if (checked) {
-                enableTracking()
-              } else {
-                disableTracking()
-              }
-            }}
+            onCheckedChange={setIsEnabled}
           />
         </div>
 
@@ -59,30 +52,6 @@ export function TrackingPreferences() {
             </div>
           </div>
         </div>
-
-        {isEnabled && (
-          <div className="rounded-md bg-amber-50 dark:bg-amber-950/20 p-4 border border-amber-200 dark:border-amber-800">
-            <div className="flex items-start">
-              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 mr-3" />
-              <div>
-                <h4 className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                  Datos recopilados en esta sesión
-                </h4>
-                <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">
-                  Los datos de comportamiento se están recopilando actualmente para personalizar tu experiencia.
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30"
-                  onClick={clearSessionEvents}
-                >
-                  Limpiar datos de sesión
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   )

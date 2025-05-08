@@ -8,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { BeeIcon } from "@/components/bee-icon"
 import { HoneycombBackground } from "@/components/honeycomb-background"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-custom"
-import { CalendarDays  SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-custom"
 import { CalendarDays, Clock, Building, Users, Check } from 'lucide-react'
 
 export const metadata: Metadata = {

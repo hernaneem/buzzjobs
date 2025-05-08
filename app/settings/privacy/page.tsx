@@ -6,15 +6,11 @@ import { Footer } from "@/components/footer"
 import { PageHeader } from "@/components/page-header"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TrackingPreferences } from "@/components/settings/tracking-preferences"
-import { PageViewTracker } from "@/components/tracking/page-view-tracker"
-import { TimeOnPageTracker } from "@/components/tracking/time-on-page-tracker"
 
 export default function PrivacySettingsPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <PageViewTracker category="general" metadata={{ section: "settings", page: "privacy" }} />
-      <TimeOnPageTracker category="general" />
 
       <main className="flex-1 py-8">
         <div className="container px-4 md:px-6">

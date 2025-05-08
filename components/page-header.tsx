@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react"
 import { Breadcrumbs } from "@/components/breadcrumbs"
-import { TooltipSettingsButton } from "@/components/tooltip-settings-button"
 
 interface PageHeaderProps {
   title: string
@@ -24,7 +23,6 @@ export function PageHeader({ title, description, children, actions, showTooltipS
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {showTooltipSettings && <TooltipSettingsButton />}
           {actions}
         </div>
       </div>
