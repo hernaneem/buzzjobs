@@ -1,30 +1,59 @@
-# Buzzjobs project
+# BuzzJobs
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+BuzzJobs es una plataforma de reclutamiento que conecta talento con oportunidades laborales.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/hernan-echeverrias-projects/v0-buzzjobs-project)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/5TaM5HEEZ1G)
+## Tecnologías
 
-## Overview
+- Next.js 15
+- React 19
+- Supabase (Autenticación y base de datos)
+- TailwindCSS
+- Radix UI
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+## Requisitos
 
-## Deployment
+- Node.js 18+
+- pnpm (recomendado) o npm
 
-Your project is live at:
+## Configuración
 
-**[https://vercel.com/hernan-echeverrias-projects/v0-buzzjobs-project](https://vercel.com/hernan-echeverrias-projects/v0-buzzjobs-project)**
+1. Clona este repositorio
+2. Copia el archivo `.env.example` a `.env.local` y completa las variables de entorno:
+   ```
+   cp .env.example .env.local
+   ```
+3. Actualiza las variables en el archivo `.env.local` con tus credenciales de Supabase
+4. Instala las dependencias:
+   ```
+   pnpm install
+   ```
 
-## Build your app
+## Desarrollo
 
-Continue building your app on:
+```
+pnpm dev
+```
 
-**[https://v0.dev/chat/projects/5TaM5HEEZ1G](https://v0.dev/chat/projects/5TaM5HEEZ1G)**
+## Construcción para producción
 
-## How It Works
+```
+pnpm build
+```
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+## Despliegue en Vercel
+
+Este proyecto está optimizado para ser desplegado en Vercel:
+
+1. Conecta tu repositorio a Vercel
+2. Configura las variables de entorno en el panel de control de Vercel:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+3. Despliega el proyecto
+
+## Estructura del proyecto
+
+- `/app` - Rutas y páginas de la aplicación (App Router de Next.js)
+- `/components` - Componentes reutilizables
+- `/contexts` - Contextos de React, incluido autenticación
+- `/lib` - Utilidades y servicios
+- `/public` - Activos estáticos

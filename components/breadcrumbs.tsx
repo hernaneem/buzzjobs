@@ -6,7 +6,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ChevronRight, Home } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { DynamicBreadcrumbItem } from "@/components/dynamic-breadcrumb-item"
 
 interface BreadcrumbsProps {
   className?: string
@@ -18,51 +17,32 @@ interface BreadcrumbsProps {
   capitalizeLinks?: boolean
 }
 
-// Mapeo de rutas a nombres más amigables
+// Mapeo de nombres de rutas a nombres más amigables
 const routeNameMapping: Record<string, string> = {
-  employer: "Portal Empresarial",
-  candidate: "Portal del Candidato",
   jobs: "Empleos",
-  dashboard: "Dashboard",
-  profile: "Perfil",
-  candidates: "Candidatos",
-  applications: "Aplicaciones",
-  "saved-jobs": "Empleos Guardados",
-  notifications: "Notificaciones",
-  settings: "Configuración",
-  "post-job": "Publicar Empleo",
-  analytics: "Analíticas",
-  interviews: "Entrevistas",
+  job: "Empleo",
   companies: "Empresas",
+  company: "Empresa",
+  candidates: "Candidatos",
+  settings: "Configuración",
+  profile: "Perfil",
+  applications: "Aplicaciones",
+  interviews: "Entrevistas",
+  dashboard: "Panel de control",
   admin: "Administración",
-  blog: "Blog",
-  resources: "Recursos",
+  employer: "Empleador",
+  candidate: "Candidato",
+  job_application: "Aplicación",
+  job_feed: "Feed de Empleos",
+  schedule_demo: "Programar Demo",
+  success_stories: "Casos de Éxito",
   pricing: "Precios",
-  contact: "Contacto",
   about: "Acerca de",
-  terms: "Términos",
+  contact: "Contacto",
   privacy: "Privacidad",
-  "success-stories": "Casos de Éxito",
-  "job-feed": "Feed de Empleos",
-  "schedule-demo": "Agendar Demo",
-  edit: "Editar",
-  statistics: "Estadísticas",
-  promote: "Promocionar",
-  views: "Vistas",
-  conversion: "Conversión",
-}
-
-// Configuración para determinar qué segmentos deben usar información dinámica
-const dynamicSegmentConfig: Record<string, { parentSegment: string; type: string }[]> = {
-  // Formato: 'segmento': [{ parentSegment: 'segmento padre requerido', type: 'tipo de dato' }]
-  // Para IDs de trabajos
-  "[id]": [
-    { parentSegment: "jobs", type: "job" },
-    { parentSegment: "companies", type: "company" },
-    { parentSegment: "applications", type: "application" },
-    { parentSegment: "interviews", type: "interview" },
-    { parentSegment: "candidates", type: "candidate" },
-  ],
+  terms: "Términos",
+  resources: "Recursos",
+  blog: "Blog",
 }
 
 export function Breadcrumbs({
@@ -97,63 +77,17 @@ export function Breadcrumbs({
     )
   }
 
-  // Función para determinar si un segmento parece ser un ID
-  const isIdSegment = (segment: string) => {
-    // Verificar si el segmento parece un ID (UUID, número, etc.)
-    return /^[0-9a-f]{8,}$|^\d+$/.test(segment)
-  }
-
-  // Función para determinar si un segmento debe usar información dinámica
-  const shouldUseDynamicInfo = (segment: string, index: number) => {
-    if (isIdSegment(segment)) {
-      // Si es un ID, verificar si tiene una configuración dinámica
-      return true
-    }
-
-    // Para segmentos específicos como [id]
-    if (dynamicSegmentConfig[segment]) {
-      // Verificar si el segmento padre coincide con alguna configuración
-      const parentSegment = index > 0 ? segments[index - 1] : null
-      return dynamicSegmentConfig[segment].some((config) => config.parentSegment === parentSegment)
-    }
-
-    return false
-  }
-
-  // Función para determinar el tipo de dato dinámico
-  const getDynamicType = (segment: string, index: number) => {
-    if (isIdSegment(segment)) {
-      // Si es un ID, determinar el tipo basado en el segmento padre
-      const parentSegment = index > 0 ? segments[index - 1] : null
-
-      if (parentSegment === "jobs" || parentSegment === "job") return "job"
-      if (parentSegment === "companies") return "company"
-      if (parentSegment === "applications") return "application"
-      if (parentSegment === "interviews") return "interview"
-      if (parentSegment === "candidates") return "candidate"
-
-      // Si estamos en una subruta de jobs
-      if (index >= 2 && segments[index - 2] === "jobs") return "job"
-    }
-
-    return null
-  }
-
   // Construir los elementos de migas de pan
   const breadcrumbItems = segments.map((segment, index) => {
     const href = `/${segments.slice(0, index + 1).join("/")}`
     const isLast = index === segments.length - 1
-    const isDynamic = shouldUseDynamicInfo(segment, index)
-    const dynamicType = getDynamicType(segment, index)
-    const label = isDynamic ? segment : getRouteName(segment)
+    const label = getRouteName(segment)
 
     return {
       href,
       segment,
       label,
       isLast,
-      isDynamic,
-      dynamicType,
     }
   })
 
@@ -172,15 +106,7 @@ export function Breadcrumbs({
         {breadcrumbItems.map((item, index) => (
           <li key={item.href} className="flex items-center">
             <span className="mx-1 text-muted-foreground">{separator}</span>
-            {item.isDynamic && item.dynamicType ? (
-              <DynamicBreadcrumbItem
-                segment={item.segment}
-                href={item.href}
-                isLast={item.isLast}
-                segmentType={item.dynamicType as "job" | "company" | "application" | "interview" | "candidate"}
-                activeClassName={activeItemClassName}
-              />
-            ) : item.isLast ? (
+            {item.isLast ? (
               <span className={cn("text-foreground font-medium", activeItemClassName)} aria-current="page">
                 {item.label}
               </span>

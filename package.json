@@ -58,15 +58,7 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.6",
     "zod": "^3.24.1",
-    "@testing-library/dom": "latest",
-    "axe-core": "latest",
-    "cypress": "latest",
-    "@supabase/supabase-js": "latest",
-    "@testing-library/jest-dom": "latest",
-    "@jest/globals": "latest",
-    "@testing-library/react": "latest",
-    "cypress-axe": "latest",
-    "cypress-image-snapshot": "latest"
+    "@supabase/supabase-js": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",
