@@ -1,12 +1,18 @@
+"use client"
+
 import { Button } from "@/components/ui/button-custom"
 import { HoneycombBackground } from "@/components/honeycomb-background"
 import { BeeIcon } from "@/components/bee-icon"
+import { Navbar } from "@/components/navbar"
+import { Footer } from "@/components/footer"
 import Link from "next/link"
 import Image from "next/image"
 
 export default function Home() {
   return (
     <>
+      <Navbar />
+      
       {/* Hero Section */}
       <section className="relative py-20 md:py-28 overflow-hidden">
         <HoneycombBackground />
@@ -408,6 +414,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </>
   )
 }
