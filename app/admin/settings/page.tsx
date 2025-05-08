@@ -190,7 +190,7 @@ export default function AdminSettings() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar user={user} />
+      <Navbar />
 
       <main className="flex-1 py-8">
         <div className="container px-4 md:px-6">
@@ -478,8 +478,7 @@ export default function AdminSettings() {
                           rows={5}
                         />
                         <p className="text-xs text-muted-foreground">
-                          Usa {{ name }} para incluir el nombre del usuario y {{ verificationLink }} para el enlace de
-                          verificación.
+                          Usa {"{{"} name {"}}"}  para incluir el nombre del usuario y {"{{"} verificationLink {"}}"}  para el enlace de verificación.
                         </p>
                       </div>
                     </div>
