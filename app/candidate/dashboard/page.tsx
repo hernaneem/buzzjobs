@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@/components/ui/button-custom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card-custom"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -91,6 +93,12 @@ export default function CandidateDashboard() {
       postedAt: "Hace 3 días",
     },
   ]
+
+  // Función para manejar guardar trabajos
+  const handleSaveJob = (jobId: string) => {
+    console.log(`Toggling save for job ${jobId}`);
+    // Aquí iría la lógica para guardar/remover un trabajo
+  };
 
   return (
     <div className="py-8">
@@ -237,11 +245,10 @@ export default function CandidateDashboard() {
                       salary={job.salary}
                       tags={job.tags}
                       isNew={job.isNew}
-                      isUrgent={job.isUrgent}
                       isRemote={job.isRemote}
                       postedAt={job.postedAt}
                       isSaved={job.isSaved}
-                      onSave={() => {}}
+                      onSave={() => handleSaveJob(job.id)}
                     />
                   ))}
                 </div>
@@ -253,7 +260,7 @@ export default function CandidateDashboard() {
                     </div>
                     <h3 className="text-lg font-medium mb-2">No tienes empleos guardados</h3>
                     <p className="text-muted-foreground mb-4">
-                      Guarda empleos para verlos más tarde y no perder oportunidades
+                      Guarda los empleos que te interesen para verlos más tarde
                     </p>
                     <Button asChild>
                       <Link href="/job-feed">Explorar empleos</Link>
@@ -264,11 +271,11 @@ export default function CandidateDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="recommended">
+          <TabsContent value="recommended" id="recommended">
             <Card>
               <CardHeader>
                 <CardTitle className="flex justify-between items-center">
-                  Empleos recomendados para ti
+                  Empleos recomendados
                   <Button variant="outline" size="sm" asChild>
                     <Link href="/job-feed">Ver más</Link>
                   </Button>
@@ -288,10 +295,25 @@ export default function CandidateDashboard() {
                       isNew={job.isNew}
                       isRemote={job.isRemote}
                       postedAt={job.postedAt}
-                      onSave={() => {}}
+                      onSave={() => handleSaveJob(job.id)}
                     />
                   ))}
                 </div>
+
+                {recommendedJobs.length === 0 && (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 rounded-full bg-muted mx-auto flex items-center justify-center mb-4">
+                      <Briefcase className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-medium mb-2">No hay recomendaciones aún</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Completa tu perfil para recibir recomendaciones personalizadas
+                    </p>
+                    <Button asChild>
+                      <Link href="/candidate/profile">Completar perfil</Link>
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
