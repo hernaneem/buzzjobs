@@ -30,7 +30,7 @@ export default function Home() {
               <Button asChild size="lg" className="w-full sm:w-auto">
                 <Link href="/employer/post-job">Publicar empleo</Link>
               </Button>
-              <Button asChild variant="secondary" size="lg" className="w-full sm:w-auto">
+              <Button asChild variant="outline" size="lg" className="w-full sm:w-auto bg-honey text-jet hover:bg-honey/90 border-honey">
                 <Link href="/jobs">Buscar empleo</Link>
               </Button>
             </div>
@@ -401,7 +401,7 @@ export default function Home() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="w-full sm:w-auto bg-white text-jet border-jet hover:bg-white/90"
+                  className="w-full sm:w-auto bg-honey text-jet border-honey hover:bg-honey/90"
                 >
                   <Link href="/jobs">Buscar empleo</Link>
                 </Button>
