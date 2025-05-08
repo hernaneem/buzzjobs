@@ -1,0 +1,177 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    --primary: 42 100% 48%;
+    --primary-foreground: 0 0% 10%;
+
+    --secondary: 42 100% 62%;
+    --secondary-foreground: 0 0% 10%;
+
+    --muted: 40 100% 95%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 0 0% 95%;
+    --accent-foreground: 0 0% 10%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 42 100% 48%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 0 0% 10%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 15%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 15%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 42 100% 48%;
+    --primary-foreground: 0 0% 10%;
+
+    --secondary: 42 100% 62%;
+    --secondary-foreground: 0 0% 10%;
+
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 42 100% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Animación de panal */
+.honeycomb-bg {
+  background-image: url("data:image/svg+xml,%3Csvg width='56' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='rgba(246, 179, 0, 0.1)' stroke-width='1'%3E%3C/path%3E%3C/svg%3E");
+  background-size: 56px 100px;
+  animation: honeycomb-float 60s linear infinite;
+}
+
+@keyframes honeycomb-float {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 1000px;
+  }
+}
+
+/* Animación de abeja para spinner */
+.bee-spinner {
+  animation: bee-fly 1.5s infinite ease-in-out;
+}
+
+@keyframes bee-fly {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-5px) rotate(-5deg);
+  }
+  50% {
+    transform: translateY(0) rotate(0deg);
+  }
+  75% {
+    transform: translateY(5px) rotate(5deg);
+  }
+}
+
+/* Estilos para la barra de progreso de panal */
+.honeycomb-progress {
+  height: 12px;
+  background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 22L3 17V7L12 2L21 7V17L12 22Z' fill='none' stroke='rgba(246, 179, 0, 0.3)' stroke-width='1'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 24px 24px;
+}
+
+.honeycomb-progress-fill {
+  height: 12px;
+  background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 22L3 17V7L12 2L21 7V17L12 22Z' fill='rgba(246, 179, 0, 1)' stroke='rgba(246, 179, 0, 1)' stroke-width='1'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 24px 24px;
+  transition: width 0.3s ease;
+}
+
+/* Estilos para confeti de abejas */
+@keyframes bee-confetti {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) translateX(var(--tx)) rotate(var(--r));
+    opacity: 0;
+  }
+}
+
+.bee-confetti {
+  position: absolute;
+  animation: bee-confetti 1s forwards ease-out;
+  --tx: 0px;
+  --r: 0deg;
+}
+
+.bee-confetti:nth-child(1) {
+  --tx: 20px;
+  --r: 45deg;
+}
+.bee-confetti:nth-child(2) {
+  --tx: -30px;
+  --r: -30deg;
+}
+.bee-confetti:nth-child(3) {
+  --tx: 10px;
+  --r: 60deg;
+}
+.bee-confetti:nth-child(4) {
+  --tx: -20px;
+  --r: -60deg;
+}
+.bee-confetti:nth-child(5) {
+  --tx: 30px;
+  --r: 30deg;
+}
+
+/* Clase para desactivar animaciones durante pruebas visuales */
+.no-animations *,
+.no-animations *::before,
+.no-animations *::after {
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
+}
