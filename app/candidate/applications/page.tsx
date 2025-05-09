@@ -1,10 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button-custom"
 import { Card, CardContent } from "@/components/ui/card-custom"
 import { Badge } from "@/components/ui/badge-custom"
-import { ArrowLeft, Briefcase, Building2, Calendar, Clock, MapPin, Search, Filter, MoreHorizontal } from "lucide-react"
+import { 
+  ArrowLeft, 
+  Briefcase, 
+  Building2, 
+  Calendar, 
+  Clock, 
+  MapPin, 
+  Search, 
+  Filter, 
+  MoreHorizontal,
+  Loader2 
+} from "lucide-react"
 import Link from "next/link"
 import {
   DropdownMenu,
@@ -15,99 +26,137 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { PageHeader } from "@/components/page-header"
+import { useAuth } from "@/contexts/auth-context"
+import { useToast } from "@/hooks/use-toast"
+import { getApplicationsByCandidate, type ApplicationWithDetails, type ApplicationStatus as DbApplicationStatus } from "@/lib/services/application-service"
+import { format, formatDistanceToNow } from "date-fns"
+import { es } from "date-fns/locale"
 
-type ApplicationStatus = "applied" | "screening" | "interview" | "offer" | "rejected" | "withdrawn"
+// Mapeo de estados de aplicación de la base de datos a la UI
+type UIApplicationStatus = "applied" | "screening" | "interview" | "offer" | "rejected" | "withdrawn"
 
-interface Application {
+interface UIApplication {
   id: string
   jobTitle: string
   company: string
   companyLogo?: string
   location: string
   appliedDate: string
-  status: ApplicationStatus
+  status: UIApplicationStatus
   lastUpdated: string
   nextStep?: string
   nextStepDate?: string
 }
 
-export default function ApplicationsPage() {
-  // Usuario de ejemplo
-  const user = {
-    name: "Carlos Méndez",
-    role: "candidate",
+// Función para mapear estados de aplicación de la BD a la UI
+const mapDbStatusToUIStatus = (dbStatus: DbApplicationStatus): UIApplicationStatus => {
+  switch (dbStatus) {
+    case "pendiente":
+      return "applied"
+    case "revisado":
+      return "screening"
+    case "entrevista":
+      return "interview"
+    case "oferta":
+      return "offer"
+    case "rechazado":
+      return "rejected"
+    case "contratado":
+      return "withdrawn" // Usamos withdrawn para representar contratado
+    default:
+      return "applied"
   }
+}
 
+export default function ApplicationsPage() {
+  const { user, profile } = useAuth()
+  const { toast } = useToast()
+  const [applications, setApplications] = useState<UIApplication[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">("all")
+  const [statusFilter, setStatusFilter] = useState<UIApplicationStatus | "all">("all")
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban")
 
-  // Datos de ejemplo para aplicaciones
-  const applications: Application[] = [
-    {
-      id: "1",
-      jobTitle: "Desarrollador Frontend",
-      company: "TechCorp",
-      companyLogo: "/placeholder.svg?height=40&width=40",
-      location: "Madrid, España",
-      appliedDate: "15 mayo, 2023",
-      status: "interview",
-      lastUpdated: "Hace 2 días",
-      nextStep: "Entrevista técnica",
-      nextStepDate: "28 mayo, 2023",
-    },
-    {
-      id: "2",
-      jobTitle: "UX/UI Designer",
-      company: "DesignStudio",
-      companyLogo: "/placeholder.svg?height=40&width=40",
-      location: "Barcelona, España",
-      appliedDate: "10 mayo, 2023",
-      status: "screening",
-      lastUpdated: "Hace 1 semana",
-    },
-    {
-      id: "3",
-      jobTitle: "Product Manager",
-      company: "Innovatech",
-      companyLogo: "/placeholder.svg?height=40&width=40",
-      location: "Valencia, España",
-      appliedDate: "5 mayo, 2023",
-      status: "rejected",
-      lastUpdated: "Hace 3 días",
-    },
-    {
-      id: "4",
-      jobTitle: "Frontend Developer",
-      company: "WebTech",
-      companyLogo: "/placeholder.svg?height=40&width=40",
-      location: "Remoto",
-      appliedDate: "20 mayo, 2023",
-      status: "applied",
-      lastUpdated: "Hace 1 día",
-    },
-    {
-      id: "5",
-      jobTitle: "UI Developer",
-      company: "CreativeAgency",
-      companyLogo: "/placeholder.svg?height=40&width=40",
-      location: "Madrid, España",
-      appliedDate: "18 mayo, 2023",
-      status: "offer",
-      lastUpdated: "Hoy",
-      nextStep: "Revisión de oferta",
-      nextStepDate: "25 mayo, 2023",
-    },
-    {
-      id: "6",
-      jobTitle: "React Developer",
-      company: "AppStudio",
-      companyLogo: "/placeholder.svg?height=40&width=40",
-      location: "Sevilla, España",
-      appliedDate: "12 mayo, 2023",
-      status: "withdrawn",
-      lastUpdated: "Hace 4 días",
-    },
-  ]
+  useEffect(() => {
+    async function loadApplications() {
+      if (!profile?.id) return
+      
+      try {
+        setIsLoading(true)
+        
+        const candidateApplications = await getApplicationsByCandidate(profile.id)
+        
+        // Convertir aplicaciones de la BD al formato de la UI
+        const uiApplications = candidateApplications.map((app): UIApplication => {
+          const jobTitle = app.job?.title || "Título desconocido"
+          const company = app.job?.company?.name || "Empresa desconocida"
+          const companyLogo = app.job?.company?.logo_url
+          const location = app.job?.location || app.job?.company?.location || "Ubicación desconocida"
+          let appliedDate = "Fecha desconocida"
+          let lastUpdated = "Fecha desconocida"
+          
+          // Formatear fechas
+          if (app.created_at) {
+            appliedDate = format(new Date(app.created_at), 'dd MMMM, yyyy', { locale: es })
+            lastUpdated = formatDistanceToNow(new Date(app.updated_at || app.created_at), { 
+              addSuffix: true,
+              locale: es 
+            })
+          }
+          
+          // Estado UI
+          const status = mapDbStatusToUIStatus(app.status)
+          
+          // TODO: Implementar próximos pasos cuando se añadan a la BD
+          // Por ahora generamos algunos datos de ejemplo basados en el estado
+          let nextStep: string | undefined
+          let nextStepDate: string | undefined
+          
+          if (status === "interview") {
+            nextStep = "Entrevista técnica"
+            // Fecha ejemplo una semana después
+            const date = new Date()
+            date.setDate(date.getDate() + 7)
+            nextStepDate = format(date, 'dd MMMM, yyyy', { locale: es })
+          } else if (status === "offer") {
+            nextStep = "Revisión de oferta"
+            // Fecha ejemplo una semana después
+            const date = new Date()
+            date.setDate(date.getDate() + 7)
+            nextStepDate = format(date, 'dd MMMM, yyyy', { locale: es })
+          }
+          
+          return {
+            id: app.id,
+            jobTitle,
+            company,
+            companyLogo,
+            location,
+            appliedDate,
+            status,
+            lastUpdated,
+            nextStep,
+            nextStepDate
+          }
+        })
+        
+        setApplications(uiApplications)
+      } catch (err) {
+        console.error("Error al cargar aplicaciones:", err)
+        setError("No se pudieron cargar las aplicaciones")
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar tus aplicaciones",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    loadApplications()
+  }, [profile, toast])
 
   const filteredApplications = applications.filter(
     (app) =>
@@ -116,7 +165,7 @@ export default function ApplicationsPage() {
         app.company.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
-  const getStatusLabel = (status: ApplicationStatus): string => {
+  const getStatusLabel = (status: UIApplicationStatus): string => {
     switch (status) {
       case "applied":
         return "Aplicado"
@@ -129,13 +178,13 @@ export default function ApplicationsPage() {
       case "rejected":
         return "Rechazado"
       case "withdrawn":
-        return "Retirado"
+        return "Contratado"
       default:
         return status
     }
   }
 
-  const getStatusVariant = (status: ApplicationStatus) => {
+  const getStatusVariant = (status: UIApplicationStatus) => {
     switch (status) {
       case "applied":
         return "secondary"
@@ -155,7 +204,7 @@ export default function ApplicationsPage() {
   }
 
   // Agrupar aplicaciones por estado para la vista Kanban
-  const groupedApplications: Record<ApplicationStatus, Application[]> = {
+  const groupedApplications: Record<UIApplicationStatus, UIApplication[]> = {
     applied: [],
     screening: [],
     interview: [],
@@ -168,8 +217,19 @@ export default function ApplicationsPage() {
     groupedApplications[app.status].push(app)
   })
 
-  // Estados para la vista (lista o kanban)
-  const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban")
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <PageHeader title="Mis Aplicaciones" description="Gestiona tus aplicaciones a ofertas de empleo" />
+        <div className="py-8 flex justify-center items-center min-h-[50vh]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-12 w-12 animate-spin text-honey" />
+            <p className="text-lg">Cargando tus aplicaciones...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -232,7 +292,7 @@ export default function ApplicationsPage() {
               <select
                 className="px-3 py-1 rounded-md border border-input bg-background h-9 text-sm"
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as ApplicationStatus | "all")}
+                onChange={(e) => setStatusFilter(e.target.value as UIApplicationStatus | "all")}
               >
                 <option value="all">Todos los estados</option>
                 <option value="applied">Aplicado</option>
@@ -240,7 +300,7 @@ export default function ApplicationsPage() {
                 <option value="interview">Entrevista</option>
                 <option value="offer">Oferta</option>
                 <option value="rejected">Rechazado</option>
-                <option value="withdrawn">Retirado</option>
+                <option value="withdrawn">Contratado</option>
               </select>
             </div>
           </div>
@@ -350,7 +410,7 @@ export default function ApplicationsPage() {
           ) : (
             // Vista Kanban
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 overflow-x-auto pb-6">
-              {(["applied", "screening", "interview", "offer", "rejected", "withdrawn"] as ApplicationStatus[]).map(
+              {(["applied", "screening", "interview", "offer", "rejected", "withdrawn"] as UIApplicationStatus[]).map(
                 (status) => (
                   <div key={status} className="min-w-[280px]">
                     <div className="bg-muted p-3 rounded-t-md">
