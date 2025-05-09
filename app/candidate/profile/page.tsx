@@ -557,7 +557,7 @@ export default function CandidateProfilePage() {
                       <Label htmlFor="location">Ubicación *</Label>
                       <Input
                         id="location"
-                        placeholder="Ej. Madrid, España"
+                        placeholder="Ej. CDMX, México"
                         value={profileData.location}
                         onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
                         required
@@ -1000,7 +1000,7 @@ export default function CandidateProfilePage() {
                     <div className="space-y-2">
                       <Label htmlFor="salary-expectations">Expectativas salariales</Label>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input id="salary-expectations" type="text" placeholder="Ej. 30.000€ - 40.000€ anuales" />
+                        <Input id="salary-expectations" type="text" placeholder="Ej. $30.000 - $40.000 mensuales" />
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         Esta información es privada y solo se mostrará a los empleadores cuando apliques a un empleo.
