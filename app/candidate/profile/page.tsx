@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button-custom"
@@ -15,68 +15,185 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { ArrowLeft, Upload, Plus, Trash2, FileText, User, Briefcase, GraduationCap } from "lucide-react"
 import Link from "next/link"
+import { useAuth } from "@/contexts/auth-context"
+import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/lib/supabase"
+import {
+  getProfileById,
+  upsertProfile,
+  getWorkExperiences,
+  getEducations,
+  getProfileSkills,
+  addWorkExperience,
+  updateWorkExperience,
+  deleteWorkExperience,
+  addEducation,
+  updateEducation,
+  deleteEducation,
+  type WorkExperience,
+  type Education,
+  type ProfileSkill
+} from "@/lib/services/profile-service"
+
+interface ResumeFile {
+  url: string;
+  name?: string;
+}
 
 export default function CandidateProfilePage() {
-  // Usuario de ejemplo
-  const user = {
-    name: "Carlos Méndez",
-    role: "candidate",
-  }
-
-  const [profileProgress, setProfileProgress] = useState(80)
+  const { user, profile } = useAuth()
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
+  const [profileProgress, setProfileProgress] = useState(0)
 
   // Estado para el formulario
   const [profileData, setProfileData] = useState({
-    firstName: "Carlos",
-    lastName: "Méndez",
-    title: "Desarrollador Frontend",
-    email: "carlos@example.com",
-    phone: "+34 612 345 678",
-    location: "Madrid, España",
-    about:
-      "Desarrollador Frontend con 3 años de experiencia en React y TypeScript. Apasionado por crear interfaces de usuario intuitivas y accesibles.",
-    skills: ["React", "JavaScript", "TypeScript", "HTML", "CSS", "Tailwind CSS"],
-    experience: [
-      {
-        id: "1",
-        title: "Desarrollador Frontend",
-        company: "TechCorp",
-        location: "Madrid, España",
-        startDate: "2021-06",
-        endDate: "",
-        current: true,
-        description:
-          "Desarrollo de aplicaciones web utilizando React y TypeScript. Implementación de diseños UI/UX y optimización de rendimiento.",
-      },
-      {
-        id: "2",
-        title: "Desarrollador Web Junior",
-        company: "WebStudio",
-        location: "Barcelona, España",
-        startDate: "2020-01",
-        endDate: "2021-05",
-        current: false,
-        description: "Desarrollo de sitios web responsivos utilizando HTML, CSS y JavaScript.",
-      },
-    ],
-    education: [
-      {
-        id: "1",
-        degree: "Grado en Ingeniería Informática",
-        institution: "Universidad Politécnica de Madrid",
-        location: "Madrid, España",
-        startDate: "2016-09",
-        endDate: "2020-06",
-        current: false,
-        description: "Especialización en desarrollo de software.",
-      },
-    ],
-    resume: null,
+    firstName: "",
+    lastName: "",
+    title: "",
+    email: "",
+    phone: "",
+    location: "",
+    about: "",
+    skills: [] as string[],
+    experience: [] as {
+      id: string
+      title: string
+      company: string
+      location: string
+      startDate: string
+      endDate: string
+      current: boolean
+      description: string
+    }[],
+    education: [] as {
+      id: string
+      degree: string
+      institution: string
+      location: string
+      startDate: string
+      endDate: string
+      current: boolean
+      description: string
+    }[],
+    resume: null as ResumeFile | null,
     isProfilePublic: true,
     isOpenToWork: true,
-    preferredJobTypes: ["full-time", "remote"],
-    preferredLocations: ["Madrid, España", "Remoto"],
+    preferredJobTypes: [] as string[],
+    preferredLocations: [] as string[],
   })
+
+  // Cargar datos del perfil desde Supabase
+  useEffect(() => {
+    async function loadProfileData() {
+      if (!profile?.id) return
+
+      setIsLoading(true)
+      try {
+        // Cargar experiencia laboral
+        const experiences = await getWorkExperiences(profile.id)
+        
+        // Cargar educación
+        const educations = await getEducations(profile.id)
+        
+        // Cargar habilidades
+        const profileSkills = await getProfileSkills(profile.id)
+        
+        // Separar nombre completo en primer nombre y apellido
+        const nameParts = profile.full_name ? profile.full_name.split(' ') : ['', '']
+        const firstName = nameParts[0] || ''
+        const lastName = nameParts.slice(1).join(' ') || ''
+        
+        // Actualizar el estado con los datos obtenidos
+        setProfileData({
+          firstName,
+          lastName,
+          title: profile.bio?.split('\n')[0] || "",
+          email: profile.email || "",
+          phone: profile.phone || "",
+          location: profile.location || "",
+          about: profile.bio || "",
+          skills: profileSkills.map(skill => skill.skill?.name || ""),
+          experience: experiences.map(exp => ({
+            id: exp.id,
+            title: exp.position,
+            company: exp.company_name,
+            location: exp.location || "",
+            startDate: exp.start_date,
+            endDate: exp.end_date || "",
+            current: exp.is_current,
+            description: exp.description || ""
+          })),
+          education: educations.map(edu => ({
+            id: edu.id,
+            degree: edu.degree,
+            institution: edu.institution,
+            location: edu.field_of_study || "",
+            startDate: edu.start_date,
+            endDate: edu.end_date || "",
+            current: edu.is_current,
+            description: edu.description || ""
+          })),
+          resume: profile.resume_url ? { url: profile.resume_url } : null,
+          isProfilePublic: true, // TODO: Agregar este campo a la tabla de perfiles
+          isOpenToWork: true, // TODO: Agregar este campo a la tabla de perfiles
+          preferredJobTypes: [], // TODO: Agregar este campo a la tabla de perfiles
+          preferredLocations: [], // TODO: Agregar este campo a la tabla de perfiles
+        })
+        
+        // Calcular progreso del perfil
+        calculateProfileProgress()
+      } catch (error) {
+        console.error("Error al cargar datos del perfil:", error)
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los datos del perfil",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    loadProfileData()
+  }, [profile, toast])
+  
+  const calculateProfileProgress = () => {
+    // Calcular el porcentaje de completado del perfil
+    let progress = 0
+    let total = 0
+    
+    // Campos básicos
+    const fields = [
+      profileData.firstName,
+      profileData.lastName,
+      profileData.title,
+      profileData.email,
+      profileData.location,
+      profileData.about
+    ]
+    
+    fields.forEach(field => {
+      total++
+      if (field) progress++
+    })
+    
+    // Habilidades
+    total++
+    if (profileData.skills.length > 0) progress++
+    
+    // Experiencia
+    total++
+    if (profileData.experience.length > 0) progress++
+    
+    // Educación
+    total++
+    if (profileData.education.length > 0) progress++
+    
+    // Convertir a porcentaje
+    const percentage = Math.round((progress / total) * 100)
+    setProfileProgress(percentage)
+  }
 
   const handleAddExperience = () => {
     const newExperience = {
@@ -128,20 +245,176 @@ export default function CandidateProfilePage() {
     })
   }
 
-  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // TODO: Implementar lógica de carga de CV
-    console.log("Resume upload:", e.target.files?.[0])
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0] || !profile?.id) return
+    
+    const file = e.target.files[0]
+    
+    try {
+      // Crear nombre único para el archivo
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${profile.id}-resume-${Date.now()}.${fileExt}`
+      
+      // Subir el archivo a Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('resumes')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        })
+      
+      if (error) throw error
+      
+      // Obtener URL pública
+      const { data: urlData } = supabase.storage
+        .from('resumes')
+        .getPublicUrl(fileName)
+      
+      // Actualizar perfil con la URL del CV
+      await upsertProfile({
+        id: profile.id,
+        resume_url: urlData.publicUrl
+      })
+      
+      // Actualizar estado local
+      setProfileData({
+        ...profileData,
+        resume: { url: urlData.publicUrl, name: file.name }
+      })
+      
+      toast({
+        title: "CV subido",
+        description: "Tu currículum ha sido actualizado correctamente"
+      })
+    } catch (error) {
+      console.error("Error al subir CV:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo subir el currículum",
+        variant: "destructive"
+      })
+    }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: conectar a Supabase más adelante
-    console.log("Profile data submitted:", profileData)
+    if (!profile?.id) return
+    
+    setIsLoading(true)
+    try {
+      // 1. Actualizar perfil básico
+      const fullName = `${profileData.firstName} ${profileData.lastName}`.trim()
+      await upsertProfile({
+        id: profile.id,
+        full_name: fullName,
+        bio: profileData.about,
+        email: profileData.email,
+        phone: profileData.phone,
+        location: profileData.location,
+        // TODO: Actualizar otros campos del perfil
+      })
+      
+      // 2. Actualizar experiencias
+      // Primero, obtener experiencias actuales
+      const currentExperiences = await getWorkExperiences(profile.id)
+      
+      // Para cada experiencia en el formulario
+      for (const exp of profileData.experience) {
+        const experienceData: Omit<WorkExperience, 'id'> & { id?: string } = {
+          profile_id: profile.id,
+          position: exp.title,
+          company_name: exp.company,
+          location: exp.location,
+          start_date: exp.startDate,
+          end_date: exp.current ? undefined : exp.endDate,
+          is_current: exp.current,
+          description: exp.description
+        }
+        
+        // Si tiene un ID que no empieza con timestamp (los nuevos tienen timestamp como ID)
+        if (exp.id && !/^\d{13,}$/.test(exp.id)) {
+          // Es una experiencia existente, actualizar
+          await updateWorkExperience({ ...experienceData, id: exp.id } as WorkExperience)
+          
+          // Remover de la lista de actuales para no borrarla después
+          const index = currentExperiences.findIndex(e => e.id === exp.id)
+          if (index >= 0) {
+            currentExperiences.splice(index, 1)
+          }
+        } else {
+          // Es nueva, crear
+          await addWorkExperience(experienceData)
+        }
+      }
+      
+      // Borrar experiencias que ya no existen
+      for (const exp of currentExperiences) {
+        await deleteWorkExperience(exp.id)
+      }
+      
+      // 3. Actualizar educación
+      // Primero, obtener educaciones actuales
+      const currentEducations = await getEducations(profile.id)
+      
+      // Para cada educación en el formulario
+      for (const edu of profileData.education) {
+        const educationData: Omit<Education, 'id'> & { id?: string } = {
+          profile_id: profile.id,
+          degree: edu.degree,
+          institution: edu.institution,
+          field_of_study: edu.location,
+          start_date: edu.startDate,
+          end_date: edu.current ? undefined : edu.endDate,
+          is_current: edu.current,
+          description: edu.description
+        }
+        
+        // Si tiene un ID que no empieza con timestamp (los nuevos tienen timestamp como ID)
+        if (edu.id && !/^\d{13,}$/.test(edu.id)) {
+          // Es una educación existente, actualizar
+          await updateEducation({ ...educationData, id: edu.id } as Education)
+          
+          // Remover de la lista de actuales para no borrarla después
+          const index = currentEducations.findIndex(e => e.id === edu.id)
+          if (index >= 0) {
+            currentEducations.splice(index, 1)
+          }
+        } else {
+          // Es nueva, crear
+          await addEducation(educationData)
+        }
+      }
+      
+      // Borrar educaciones que ya no existen
+      for (const edu of currentEducations) {
+        await deleteEducation(edu.id)
+      }
+      
+      // 4. Actualizar habilidades
+      // TODO: Implementar actualización de habilidades
+      
+      toast({
+        title: "Perfil actualizado",
+        description: "Tu perfil ha sido actualizado correctamente"
+      })
+      
+      // Recalcular progreso
+      calculateProfileProgress()
+    } catch (error) {
+      console.error("Error al guardar perfil:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo guardar el perfil",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar user={user} />
+      <Navbar />
 
       <main className="flex-1 py-8">
         <div className="container px-4 md:px-6">
@@ -200,7 +473,15 @@ export default function CandidateProfilePage() {
                   <CardContent className="space-y-6">
                     <div className="flex items-center gap-4">
                       <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center relative">
-                        <User className="h-12 w-12 text-muted-foreground" />
+                        {profile?.avatar_url ? (
+                          <img 
+                            src={profile.avatar_url} 
+                            alt={profile.full_name || "Avatar"} 
+                            className="w-full h-full object-cover rounded-full"
+                          />
+                        ) : (
+                          <User className="h-12 w-12 text-muted-foreground" />
+                        )}
                         <label
                           htmlFor="avatar-upload"
                           className="absolute bottom-0 right-0 w-8 h-8 bg-honey rounded-full flex items-center justify-center cursor-pointer"
@@ -752,7 +1033,9 @@ export default function CandidateProfilePage() {
               </TabsContent>
 
               <div className="flex justify-end mt-6">
-                <Button type="submit">Guardar cambios</Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? "Guardando..." : "Guardar cambios"}
+                </Button>
               </div>
             </form>
           </Tabs>
